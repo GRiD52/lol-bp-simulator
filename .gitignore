@@ -1,0 +1,24 @@
+# 本地生成的临时文件
+_smoke.html
+_eve.html
+_probe.html
+_shot.html
+_pomshot.html
+
+# 抓取缓存里的中间产物（体积大，且可由脚本重跑）
+_tools/raw/
+_tools/gs16.json
+_tools/gs25.json
+_tools/ids16.json
+_tools/ids16_all.json
+_tools/ids25.json
+_tools/series16.json
+_tools/names.json
+_tools/zhnames.json
+_tools/photos-found.json
+_tools/poreport.json
+_tools/teamlist.json
+
+# 系统杂项
+.DS_Store
+Thumbs.db

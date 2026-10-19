@@ -1,0 +1,17 @@
+const path = require('path');
+const root = path.join(__dirname, '..');
+global.window = {};
+require(path.join(root, 'js/data/champions.js'));
+require(path.join(root, 'js/core/meta.js'));
+const ids = new Set(window.CHAMPIONS.map((c) => c.i));
+const M = window.META;
+const used = new Set();
+M.COUNTERS.forEach((c) => { used.add(c[0]); used.add(c[1]); });
+Object.keys(M.DUOS).forEach((k) => k.split('|').forEach((x) => used.add(x)));
+Object.keys(M.PAIRS).forEach((k) => k.split('|').forEach((x) => used.add(x)));
+Object.keys(M.SPIKE).forEach((x) => used.add(x));
+M.BLIND.forEach((x) => used.add(x));
+Object.keys(M.ANSWER).forEach((k) => M.ANSWER[k].forEach((x) => used.add(x)));
+const miss = [...used].filter((x) => !ids.has(x));
+console.log('ids total', ids.size, 'used', used.size, 'missing', miss.length);
+console.log(miss.join(','));

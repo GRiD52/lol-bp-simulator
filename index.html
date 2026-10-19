@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BP 模拟器 · 2026 赛季</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bg-decoration"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">BP</div>
+    <div class="brand-text">
+      <h1>英雄联盟 BP 模拟器</h1>
+      <span class="patch">版本 <b id="patch-label">16.20.1</b> · 全球总决赛规则 · 无畏征召</span>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="ghost-btn" id="btn-editor">编辑选手数据</button>
+    <button class="ghost-btn" id="btn-help">规则说明</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 首页 ============ -->
+  <section id="screen-home" class="screen active">
+    <div class="hero">
+      <h2>选择你的对局</h2>
+      <p>2026 赛季 LPL / LCK 主流战队，标准职业 BP 顺序，BO3 / BO5 全局无畏征召。</p>
+    </div>
+
+    <div class="match-setup">
+      <div class="team-picker blue">
+        <div class="side-label">队伍 A · 首局蓝方</div>
+        <div class="picker-body">
+          <div class="team-logo" id="home-blue-logo"></div>
+          <select id="home-blue-team"></select>
+          <div class="roster-mini" id="home-blue-roster"></div>
+        </div>
+      </div>
+
+      <div class="vs-block">
+        <div class="vs">VS</div>
+        <div class="mode-switch" id="mode-switch">
+          <button data-mode="BO3">BO3</button>
+          <button data-mode="BO5" class="active">BO5</button>
+        </div>
+        <button class="primary-btn big" id="btn-start">开始 BP</button>
+        <button class="ghost-btn small" id="btn-random">随机对局</button>
+      </div>
+
+      <div class="team-picker red">
+        <div class="side-label">队伍 B · 首局红方</div>
+        <div class="picker-body">
+          <div class="team-logo" id="home-red-logo"></div>
+          <select id="home-red-team"></select>
+          <div class="roster-mini" id="home-red-roster"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="play-mode">
+      <div class="pm-group">
+        <span class="pm-cap">对局模式</span>
+        <div class="pm-switch" id="playmode-switch">
+          <button data-pm="pvp" class="active">玩家 vs 玩家</button>
+          <button data-pm="pve">玩家 vs AI</button>
+          <button data-pm="eve">AI vs AI</button>
+        </div>
+      </div>
+      <div class="pm-group" id="pm-side-wrap" hidden>
+        <span class="pm-cap">你执</span>
+        <select class="pm-select" id="myside-team"></select>
+        <span class="pm-sub">整场跟着这支队伍，不管这局在红还是蓝</span>
+      </div>
+      <div class="pm-group" id="pm-prof-wrap" hidden>
+        <span class="pm-cap">AI 风格</span>
+        <div class="pm-switch" id="prof-switch">
+          <button data-prof="control" class="active">运营流</button>
+          <button data-prof="tempo">节奏流</button>
+          <button data-prof="mix">对立风格</button>
+        </div>
+      </div>
+      <p class="pm-tip">两边都由你手动 BP，AI 只在「AI 代打这一手」时替当前方出手。</p>
+    </div>
+
+    <div class="rules-row">
+      <label class="switch"><input type="checkbox" id="opt-fearless" checked><span></span>无畏征召（全局 BP）</label>
+      <label class="switch"><input type="checkbox" id="opt-bancarry"><span></span>硬核模式：禁用也继承</label>
+      <label class="switch"><input type="checkbox" id="opt-caster" checked><span></span>解说模式</label>
+      <label class="num"><span>每手倒计时</span><input type="number" id="opt-timer" min="0" max="120" value="30"><em>秒（0=不限）</em></label>
+    </div>
+
+    <div class="home-tips">
+      <div class="tip-card">
+        <h4>标准职业 BP 顺序</h4>
+        <p>蓝红交替 6 ban → 蓝1 红2 蓝2 红1 → 红蓝交替 4 ban → 红1 蓝2 红1，共 20 手。</p>
+      </div>
+      <div class="tip-card">
+        <h4>无畏征召</h4>
+        <p>同一场 BO3/BO5 中，前面小局被<b>选用</b>过的英雄，双方后续都不可再选；禁用每局重置。</p>
+      </div>
+      <div class="tip-card">
+        <h4>BP 之后</h4>
+        <p>可以自由调整英雄所在的楼位与分路，确认后生成阵容分析、解说式预测和一整局的模拟解说。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BP 页 ============ -->
+  <section id="screen-draft" class="screen">
+    <div class="draft-head">
+      <div class="dh-team blue" id="dh-blue"></div>
+      <div class="dh-center">
+        <div class="series-score" id="draft-score">0 : 0</div>
+        <div class="game-no" id="draft-game-no">第 1 局</div>
+        <div class="turn-banner" id="turn-banner">蓝色方禁用</div>
+        <div class="timer-ring" id="timer-ring"><span id="timer-num">30</span></div>
+      </div>
+      <div class="dh-team red" id="dh-red"></div>
+    </div>
+
+    <div class="caster" id="caster" hidden></div>
+
+    <div class="draft-board">
+      <div class="board-side blue">
+        <div class="ban-row" id="ban-blue"></div>
+        <div class="pick-row" id="pick-blue"></div>
+      </div>
+      <div class="board-middle">
+        <div class="step-track" id="step-track"></div>
+        <div class="ai-log" id="ai-log" hidden></div>
+        <div class="pool-locked" id="pool-locked"></div>
+        <div class="pool-head">
+          <input type="text" id="champ-search" placeholder="搜索英雄 / 中英文名…">
+          <div class="filters" id="champ-filters"></div>
+        </div>
+        <div class="champ-grid" id="champ-grid"></div>
+        <div class="art-peek" id="art-peek">
+          <img id="art-peek-img" alt="" loading="lazy">
+          <div class="art-peek-cap"><b id="art-peek-name"></b><em id="art-peek-title"></em></div>
+        </div>
+        <div class="draft-actions">
+          <button class="ghost-btn" id="btn-undo">撤销</button>
+          <button class="ghost-btn" id="btn-suggest">系统推荐</button>
+          <button class="ghost-btn" id="btn-ai">AI 代打这一手</button>
+          <button class="ghost-btn" id="btn-caster">解说：开</button>
+          <button class="danger-btn" id="btn-abort">放弃本局</button>
+        </div>
+      </div>
+      <div class="board-side red">
+        <div class="ban-row" id="ban-red"></div>
+        <div class="pick-row" id="pick-red"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 阵容整理 ============ -->
+  <section id="screen-assign" class="screen">
+    <div class="assign-head">
+      <h2>阵容整理</h2>
+      <p>把英雄拖到你想让它打的位置上，或者点击两个位置交换。确认后会生成阵容分析。</p>
+    </div>
+    <div class="assign-wrap">
+      <div class="assign-side blue" id="assign-blue"></div>
+      <div class="assign-mid">
+        <button class="primary-btn" id="btn-confirm-assign">确认阵容 · 开始分析</button>
+        <button class="ghost-btn small" id="btn-auto-assign">重新自动分配</button>
+      </div>
+      <div class="assign-side red" id="assign-red"></div>
+    </div>
+    <div class="assign-hint" id="assign-hint"></div>
+  </section>
+
+  <!-- ============ 分析 ============ -->
+  <section id="screen-analysis" class="screen">
+    <div class="analysis-head">
+      <div class="ah-team blue" id="an-blue"></div>
+      <div class="ah-prob">
+        <div class="prob-bar"><div class="prob-blue" id="prob-blue"></div></div>
+        <div class="prob-nums"><span id="prob-blue-num">50%</span><span id="prob-red-num">50%</span></div>
+      </div>
+      <div class="ah-team red" id="an-red"></div>
+    </div>
+    <div class="analysis-grid">
+      <div class="panel wide art-panel" id="panel-art"></div>
+      <div class="panel wide bpq-panel" id="panel-bpq"></div>
+      <div class="panel" id="panel-lanes"></div>
+      <div class="panel" id="panel-dims"></div>
+      <div class="panel wide" id="panel-verdict"></div>
+      <div class="panel wide" id="panel-notes"></div>
+    </div>
+    <div class="analysis-actions">
+      <button class="ghost-btn" id="btn-back-assign">返回调整阵容</button>
+      <button class="primary-btn big" id="btn-sim">模拟这一把 · 生成全程解说</button>
+    </div>
+  </section>
+
+  <!-- ============ 模拟 ============ -->
+  <section id="screen-sim" class="screen">
+    <div class="sim-head">
+      <div class="sim-team blue" id="sim-blue"></div>
+      <div class="sim-score-wrap"><div class="sim-score" id="sim-score">0 : 0</div><div class="sim-score-cap">击杀</div></div>
+      <div class="sim-team red" id="sim-red"></div>
+    </div>
+    <div class="sim-chart-wrap">
+      <div class="sim-chart-head">
+        <span class="sch-title">经济走势</span>
+        <span class="sch-legend"><i class="lg-blue"></i>蓝色方领先<i class="lg-red"></i>红色方领先</span>
+        <span class="sch-objs" id="sim-objcap"></span>
+      </div>
+      <div class="sim-chart" id="sim-chart"></div>
+      <div class="sim-objs" id="sim-objs"></div>
+    </div>
+    <div class="sim-body">
+      <div class="sim-feed" id="sim-feed"></div>
+      <div class="sim-side" id="sim-side"></div>
+    </div>
+    <div class="sim-actions" id="sim-actions"></div>
+  </section>
+
+</main>
+
+<!-- ============ 选手编辑弹窗 ============ -->
+<div class="modal mvp-modal" id="modal-mvp">
+  <div class="mvp-stage">
+    <div class="mvp-splash" id="mvp-splash"></div>
+    <div class="mvp-vignette"></div>
+    <div class="mvp-beam"></div>
+    <div class="mvp-glow"></div>
+    <div class="mvp-side-info">
+      <div class="mvp-crown"><span class="mc-line"></span><span class="mc-txt">MATCH&nbsp;MVP</span><span class="mc-line"></span></div>
+      <div class="mvp-portrait" id="mvp-portrait"></div>
+      <div class="mvp-tagline" id="mvp-tagline"></div>
+      <h2 id="mvp-name">—</h2>
+      <div class="mvp-champ" id="mvp-champ">—</div>
+      <div class="mvp-team" id="mvp-team">—</div>
+      <div class="mvp-badges" id="mvp-badges"></div>
+      <button class="mvp-continue" id="mvp-close">继续比赛 →</button>
+    </div>
+    <div class="mvp-main">
+      <div class="mvp-top">
+        <div class="mvp-kda-block">
+          <div class="mvp-kda-cap" id="mvp-kda-cap">击杀 / 死亡 / 助攻</div>
+          <div class="mvp-kda" id="mvp-kda">0 / 0 / 0</div>
+          <div class="mvp-grade-row"><span class="mvp-grade" id="mvp-grade">S</span><span class="mvp-grade-cap">本局评分</span><b id="mvp-rating">0.0</b></div>
+        </div>
+        <div class="mvp-ring" id="mvp-ring"></div>
+      </div>
+      <div class="mvp-grid" id="mvp-grid"></div>
+      <div class="mvp-bars" id="mvp-bars"></div>
+      <div class="mvp-quote" id="mvp-quote"></div>
+      <div class="mvp-team-row" id="mvp-team-row"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-editor">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <h3>选手数据编辑</h3>
+      <button class="close-btn" data-close>×</button>
+    </div>
+    <div class="editor-bar">
+      <select id="editor-team"></select>
+      <span class="muted" id="save-state">数值 0–99，改完记得点保存</span>
+      <button class="primary-btn small" id="btn-save-all">保存修改</button>
+      <button class="primary-btn small" id="btn-add-player">＋ 新增选手</button>
+      <button class="primary-btn small" id="btn-add-team">＋ 新增队伍</button>
+      <button class="ghost-btn small" id="btn-team-logo">换队标</button>
+      <button class="ghost-btn small" id="btn-reset-data">恢复默认</button>
+    </div>
+    <div class="editor-create">
+      <input type="text" id="np-name" placeholder="选手 ID（如 Rookie）" maxlength="16">
+      <select id="np-team"></select>
+      <select id="np-role">
+        <option value="top">上单</option>
+        <option value="jg">打野</option>
+        <option value="mid">中单</option>
+        <option value="bot">下路</option>
+        <option value="sup">辅助</option>
+      </select>
+      <input type="text" id="np-champs" placeholder="擅长英雄（英文 ID，逗号分隔，可留空）">
+      <button class="primary-btn small" id="btn-create-player">创建自定义选手</button>
+    </div>
+    <div class="editor-list" id="editor-list"></div>
+  </div>
+</div>
+
+<!-- ============ 选手转会弹窗 ============ -->
+<div class="modal" id="modal-transfer">
+  <div class="modal-box narrow">
+    <div class="modal-head">
+      <h3 id="transfer-title">选手转会</h3>
+      <button class="close-btn" data-close>×</button>
+    </div>
+    <div class="transfer-body">
+      <label class="transfer-label">目标队伍
+        <select id="transfer-team"></select>
+      </label>
+      <p class="transfer-hint">转会会把选手从原队伍移到目标队伍，场上名单立即生效；转入「自由选手池」后，任何队伍都能选到他。</p>
+      <div class="transfer-actions">
+        <button class="ghost-btn" data-close>取消</button>
+        <button class="primary-btn" id="btn-transfer-ok">确认转会</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 规则说明弹窗 ============ -->
+<div class="modal" id="modal-help">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>规则说明</h3>
+      <button class="close-btn" data-close>×</button>
+    </div>
+    <div class="help-body" id="help-body"></div>
+  </div>
+</div>
+
+<script src="js/data/champions.js"></script>
+<script src="js/data/champmeta.js"></script>
+<script src="js/data/teams.js"></script>
+<script src="js/data/photos.js"></script>
+<script src="js/data/players.js"></script>
+<script src="js/data/prostats.js"></script>
+<script src="js/data/profiles.js"></script>
+<script src="js/data/nicknames.js"></script>
+<script src="js/core/rules.js"></script>
+<script src="js/core/style.js"></script>
+<script src="js/core/draft.js"></script>
+<script src="js/core/meta.js"></script>
+<script src="js/core/aibp.js"></script>
+<script src="js/core/caster.js"></script>
+<script src="js/core/analysis.js"></script>
+<script src="js/core/sim.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

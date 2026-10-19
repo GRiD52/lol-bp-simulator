@@ -1,0 +1,13 @@
+import fs from 'fs';
+const r = await fetch('https://ddragon.leagueoflegends.com/cdn/16.20.1/data/en_US/champion.json');
+const j = await r.json();
+const map = {};
+Object.values(j.data).forEach((c) => { map[c.name] = c.id; });
+fs.writeFileSync('_tools/names.json', JSON.stringify(map, null, 0));
+console.log('names', Object.keys(map).length);
+const r2 = await fetch('https://ddragon.leagueoflegends.com/cdn/16.20.1/data/zh_CN/champion.json');
+const j2 = await r2.json();
+const zmap = {};
+Object.values(j2.data).forEach((c) => { zmap[c.id] = { zh: c.name, title: c.title }; });
+fs.writeFileSync('_tools/zhnames.json', JSON.stringify(zmap, null, 0));
+console.log('zh', Object.keys(zmap).length);
