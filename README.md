@@ -14,13 +14,26 @@ python -m http.server 8000      # 或 npx serve .
 # 打开 http://127.0.0.1:8000/
 ```
 
-## 在线部署（发给朋友/手机玩）
+## 在线地址
+
+**<https://grid52.github.io/lol-bp-simulator/>** —— 手机、电脑打开就能玩，不用装任何东西。
+
+- 代码仓库：<https://github.com/GRiD52/lol-bp-simulator>（公开仓库，GitHub Pages 从 `main` 分支根目录直接发布）
+- 更新方式：改完本地文件后 commit + push 到 `main`，Pages 会自动重新发布（第一次或改动较多时可能要等 5–15 分钟）。
+- 本机 `github.com` 直接被墙，用 `_tools/netproxy.mjs` 这个本地转发代理绕过：
+
+  ```
+  # 终端 1：起代理（把 github.com 解析到可达的 GitHub 边缘 IP）
+  $env:GH_PROXY_IP='140.82.112.3'; node _tools/netproxy.mjs 9450
+  # 终端 2：推送（Git for Windows 的 schannel 走代理会握手失败，必须用 openssl 后端）
+  git -c http.proxy=http://127.0.0.1:9450 -c http.sslBackend=openssl push <仓库地址> HEAD:main
+  ```
+
+## 自己部署一份
 
 纯静态站，任何静态托管都能放，**不用改任何代码**（所有资源路径都是相对的，放在子路径下也能跑）。
 
-### 方式 A：GitHub Pages（有仓库，最省事）
-
-仓库里已经放好 `.github/workflows/deploy.yml`，推到 GitHub 的 `main` 分支就会自动发布：
+### 方式 A：GitHub Pages
 
 ```
 cd D:\deepseek\bp
@@ -31,11 +44,11 @@ git remote add origin https://github.com/<你的用户名>/<仓库名>.git
 git push -u origin main
 ```
 
-然后到仓库 **Settings → Pages → Build and deployment → Source: GitHub Actions**，等一次 Action 跑完，地址是
-`https://<你的用户名>.github.io/<仓库名>/`。
+然后到仓库 **Settings → Pages → Build and deployment → Source: Deploy from a branch → main / (root)**。
+注意在仓库根目录放一个空的 `.nojekyll` 文件，否则 GitHub 会用 Jekyll 处理整个站点（本项目 796 个文件、43MB，Jekyll 构建会失败或卡十几分钟）。
 
 > 首次 push 会要求登录：Windows 上会弹浏览器授权，或者用 GitHub 的 Personal Access Token 当密码。
-> 只想发布不想要 `_tools/` 等开发文件也可以——workflow 只把 `index.html css js assets docs README.md` 拷进产物。
+> `_tools/` 是开发脚本（抓数据、跑自检、截图），已在 `.gitignore` 里排除，不会上传。
 
 ### 方式 B：Netlify Drop（没账号也能 30 秒上线）
 
